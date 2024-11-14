@@ -24,6 +24,7 @@
 #define LINGWI_IO_SIZE 5001
 #define LINGWI_URL_SIZE (LINGWI_IO_SIZE + 128)
 #define LINGWI_ISO639_1_LANGCODE_COUNT 184
+#define LINGWI_TRANSLATION_ENGINES_COUNT 1
 
 // SECTION: Function declarations
 size_t callback(char* ptr, size_t size, size_t nmemb, char* data);
@@ -34,6 +35,7 @@ int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char*
 int translate_engine_google(char* dest, char* src, char* sl, char* tl);
 
 int lang_valid(char* lang);
+int engine_valid(char* engine);
 
 // SECTION: Global variables
 static struct option long_option_s[] = {
@@ -41,7 +43,8 @@ static struct option long_option_s[] = {
     { "target-language", required_argument, NULL, 't' },
     { "engine", required_argument, NULL, 'e' },
     { "api-key", required_argument, NULL, 'a' },
-    { "version", no_argument, NULL, 'v' },
+    { "version", no_argument, NULL, 'V' },
+    { "verbose", no_argument, NULL, 'v' },
     { "help", no_argument, NULL, 'h' },
     { 0, 0, 0, 0 }
 };
@@ -49,28 +52,42 @@ static struct option long_option_s[] = {
 // Source:
 // - https://en.wikipedia.org/wiki/ISO_639
 // - https://www.iso.org/iso-639-language-code
+// - https://cloud.google.com/translate/docs/languages
 // Array generated via ChatGPT
 static const char* ISO_639_1_LANGUAGE_CODES[LINGWI_ISO639_1_LANGCODE_COUNT] = {
-    "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
-    "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo",
-    "br", "bs", "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv",
-    "cy", "da", "de", "dv", "dz", "ee", "el", "en", "eo", "es",
-    "et", "eu", "fa", "ff", "fi", "fj", "fo", "fr", "fy", "ga",
-    "gd", "gl", "gn", "gu", "gv", "ha", "he", "hi", "ho", "hr",
-    "ht", "hu", "hy", "hz", "ia", "id", "ie", "ig", "ii", "ik",
-    "io", "is", "it", "iu", "ja", "jv", "ka", "kg", "ki", "kj",
-    "kk", "kl", "km", "kn", "ko", "kr", "ks", "ku", "kv", "kw",
-    "ky", "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv",
+    "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az", 
+    "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs", 
+    "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy", 
+    "da", "de", "dv", "dz", 
+    "ee", "el", "en", "eo", "es", "et", "eu", 
+    "fa", "ff", "fi", "fj", "fo", "fr", "fy", 
+    "ga", "gd", "gl", "gn", "gu", "gv", 
+    "ha", "he", "hi", "ho", "hr", "ht", "hu", "hy", "hz", 
+    "ia", "id", "ie", "ig", "ii", "ik", "io", "is", "it", "iu", 
+    "ja", "jv", 
+    "ka", "kg", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kr", "ks", "ku", "kv", "kw", "ky", 
+    "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv",
     "mg", "mh", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my",
-    "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv",
-    "ny", "oc", "oj", "om", "or", "os", "pa", "pi", "pl", "ps",
-    "pt", "qu", "rm", "rn", "ro", "ru", "rw", "sa", "sc", "sd",
-    "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr",
-    "ss", "st", "su", "sv", "sw", "ta", "te", "tg", "th", "ti",
-    "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty", "ug",
-    "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
-    "yo", "za", "zh", "zu"
+    "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv", "ny", 
+    "oc", "oj", "om", "or", "os", 
+    "pa", "pi", "pl", "ps", "pt", 
+    "qu", 
+    "rm", "rn", "ro", "ru", "rw", 
+    "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "ss", "st", "su", "sv", "sw", 
+    "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty", 
+    "ug", "uk", "ur", "uz", 
+    "ve", "vi", "vo", 
+    "wa", "wo", 
+    "xh", 
+    "yi", "yo", 
+    "za", "zh", "zu"
 };
+
+static const char* TRANSLATION_ENGINES[LINGWI_TRANSLATION_ENGINES_COUNT] = {
+    "google"
+};
+
+static int verbose_flag = 0;
 
 int main(int ac, char** av) {
     char input[LINGWI_IO_SIZE] = { 0 }; 
@@ -82,7 +99,7 @@ int main(int ac, char** av) {
     char apikey[128];
 
     if(ac <= 1) {
-        fprintf(stderr, "%s -[OPTIONS] [TEXT] ... \n", av[0]);
+        fprintf(stderr, "%s [OPTIONS] [TEXT] ... \n", av[0]);
         return EXIT_FAILURE;
     }
 
@@ -105,17 +122,32 @@ size_t callback(char* ptr, size_t size, size_t nmemb, char* data) {
 int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text) {
     // Processing program options
     char opt;
-    while((opt = getopt_long(ac, av, "stavh", long_option_s, NULL)) != -1) {
+    while((opt = getopt_long(ac, av, ":s:t:e:a:vVh", long_option_s, NULL)) != -1) {
         switch(opt) {
             case 's': {
+                if(!lang_valid(optarg)) {
+                    fprintf(stderr, "[ ERR ] Invalid language code: %s\n", optarg);
+                    exit(EXIT_FAILURE);
+                }
+
                 strcpy(sl, optarg);
             } break;
 
             case 't': {
+                if(!lang_valid(optarg)) {
+                    fprintf(stderr, "[ ERR ] Invalid language code: %s\n", optarg);
+                    exit(EXIT_FAILURE);
+                }
+
                 strcpy(tl, optarg);
             } break;
 
             case 'e': {
+                if(!engine_valid(optarg)) {
+                    fprintf(stderr, "[ ERR ] Invalid engine: %s\n", optarg);
+                    exit(EXIT_FAILURE);
+                }
+                
                 strcpy(engine, optarg);
             } break;
 
@@ -123,20 +155,24 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
                 strcpy(apikey, optarg);
             } break;
 
+            case 'v': {
+                verbose_flag = 1;
+            } break;
+
             case 'h':
                 fprintf(stdout, "\033[1mlingwi\033[0m - translation command-line utility\n");
-                fprintf(stdout, "  \033[1m--s\033[0m, \033[1m--source-language\033[0m - select a source language (translation from...) (DEFAULT: en)\n");
-                fprintf(stdout, "  \033[1m--t\033[0m, \033[1m--target-language\033[0m - select a target language (translation to...) (DEFAULT: en)\n");
-                fprintf(stdout, "  \033[1m--e\033[0m, \033[1m--engine\033[0m - select a translation engine (DEFAULT: google)\n");
-                fprintf(stdout, "  \033[1m--a\033[0m, \033[1m--api-key\033[0m - select an api key (DEFAULT: none)\n");
-                fprintf(stdout, "  \033[1m--v\033[0m, \033[1m--version\033[0m - display a version (%s)\n", LINGWI_VERSION);
-                fprintf(stdout, "  \033[1m--h\033[0m, \033[1m--help\033[0m - display a help message\n\n");
-                fprintf(stdout, "\033[1mExample language codes:\033[0m\n   | en | es | ja | de | ru | pl | bo |\n"); 
+                fprintf(stdout, "  \033[1m-s\033[0m, \033[1m--source-language\033[0m    select a source language (translation from...) (DEFAULT: en)\n");
+                fprintf(stdout, "  \033[1m-t\033[0m, \033[1m--target-language\033[0m    select a target language (translation to...) (DEFAULT: en)\n");
+                fprintf(stdout, "  \033[1m-e\033[0m, \033[1m--engine\033[0m             select a translation engine (DEFAULT: google)\n");
+                fprintf(stdout, "  \033[1m-a\033[0m, \033[1m--api-key\033[0m            select an api key (DEFAULT: none)\n");
+                fprintf(stdout, "  \033[1m-V\033[0m, \033[1m--version\033[0m            display a version (%s)\n", LINGWI_VERSION);
+                fprintf(stdout, "  \033[1m-v\033[0m, \033[1m--verbose\033[0m            enable verbosity\n");
+                fprintf(stdout, "  \033[1m-h\033[0m, \033[1m--help\033[0m               display a help message\n\n");
                 fprintf(stdout, "\033[1mAll language codes:\033[0m\n   https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes\n"); 
                 
                 exit(EXIT_SUCCESS);
 
-            case 'v':
+            case 'V':
                 fprintf(stdout, "%s\n", LINGWI_VERSION);
                 exit(EXIT_SUCCESS);
 
@@ -150,17 +186,23 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
         strcat(text, av[i]);
     }
 
-    assert(*text != 0);
+    if(*text == 0 || text == NULL) {
+        fprintf(stderr, "[ ERR ] Invalid text input\n");
+        exit(EXIT_FAILURE);
+    }
 
     return 1;
 }
 
 int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl) {
-    assert(lang_valid(sl) == 1);
-    assert(lang_valid(tl) == 1);
+    if(verbose_flag) {
+        fprintf(stdout, "[ INFO ] Source language:  %s\n", sl);
+        fprintf(stdout, "[ INFO ] Target language:  %s\n", tl);
+        fprintf(stdout, "[ INFO ] Selected engine:  %s\n", engine);
+        fprintf(stdout, "[ INFO ] API Key:          %s\n", apikey);
+    }
 
-    if(strcmp(engine, "google") == 0) {
-        (void) apikey;
+    if(strcmp(engine, TRANSLATION_ENGINES[0]) == 0) { // Engine: google
         translate_engine_google(dest, src, sl, tl);
     } else {
         fprintf(stderr, "[ ERR ] Invalid engine\n");
@@ -176,10 +218,22 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
-    assert(curl != NULL);
+    if(!curl) {
+        fprintf(stderr, "[ ERR ] Could not initialize cURL\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(verbose_flag) fprintf(stdout, "[ INFO ] cURL created successfully\n");
 
     char* text = curl_easy_escape(curl, src, 0);
-    assert(text != NULL);
+    if(!text) {
+        fprintf(stderr, "[ ERR ] Modified translation string is invalid\n");
+
+        curl_easy_cleanup(curl);
+        exit(EXIT_FAILURE);
+    }
+
+    if(verbose_flag) fprintf(stdout, "[ INFO ] Encoded string: %s\n", text);
 
     char url[LINGWI_URL_SIZE];
     snprintf(
@@ -191,19 +245,37 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
             text
     );
 
+    if(verbose_flag) fprintf(stdout, "[ INFO ] URL: %s\n", url);
+    
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     // Translation
     ccode = curl_easy_perform(curl);
-    assert(ccode == CURLE_OK);
-    curl_easy_cleanup(curl);
-   
-    // Parsing
-    // TODO: Modifing the source language leaves the '[' and '"' signs
-    sscanf(dest, "[\"%5000[^\"]", dest);
+    
+    if(verbose_flag) fprintf(stdout, "[ INFO ] cURL perform exit code: %i\n", ccode);
+    if(ccode != CURLE_OK) {
+        fprintf(stderr, "[ ERR ] %s\n", curl_easy_strerror(ccode));
 
+        curl_easy_cleanup(curl);
+        exit(EXIT_FAILURE);
+    }
+
+    curl_easy_cleanup(curl);
+
+    if(verbose_flag) fprintf(stdout, "[ INFO ] Translation result: %s\n", dest);
+
+    // Parsing
+    sscanf(dest, "[\"%5000[^\"]", dest);
+    if(!dest) {
+        fprintf(stderr, "[ ERR ] Parsing failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(verbose_flag) fprintf(stdout, "[ INFO ] Parse result: %s\n", dest);
+    
     return 1;
 }
 
@@ -215,3 +287,34 @@ int lang_valid(char* lang) {
 
     return 0;
 }
+
+int engine_valid(char* engine) {
+    for(int i = 0; i < LINGWI_TRANSLATION_ENGINES_COUNT; i++) {
+        if(strcmp(engine, TRANSLATION_ENGINES[i]) == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+// + ------------------------------------------------------------------------------ +
+// | LICENCE                                                                        |
+// + ------------------------------------------------------------------------------ +
+// | Permission is hereby granted, free of charge, to any person obtaining a copy   |
+// | of this software and associated documentation files (the "Software"), to deal  |
+// | in the Software without restriction, including without limitation the rights   |
+// | to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      |
+// | copies of the Software, and to permit persons to whom the Software is          |
+// | furnished to do so, subject to the following conditions:                       |
+// |                                                                                |
+// | The above copyright notice and this permission notice shall be included in all |
+// | copies or substantial portions of the Software.                                |
+// |                                                                                |
+// | THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,                |
+// | EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF             |
+// | MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.         |
+// | IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,    |
+// | DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR          |
+// | OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE  |
+// | OR OTHER DEALINGS IN THE SOFTWARE.                                             |
+// + ------------------------------------------------------------------------------ +
