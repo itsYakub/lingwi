@@ -17,6 +17,7 @@
 #include <string.h>
 #include <assert.h>
 #include <getopt.h>
+#include <unistd.h>
 #include <curl/curl.h>
 
 // SECTION: Macro definitions
@@ -27,15 +28,23 @@
 #define LINGWI_TRANSLATION_ENGINES_COUNT 1
 
 // SECTION: Function declarations
+// SECTION: Function: cURL
 size_t callback(char* ptr, size_t size, size_t nmemb, char* data);
 
+// SECTION: Function: Program arguments
 int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text);
 
+// SECTION: Function: Translation
 int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl);
 int translate_engine_google(char* dest, char* src, char* sl, char* tl);
 
+// SECTION: Function: Validation
 int lang_valid(char* lang);
 int engine_valid(char* engine);
+int fexist(char* fpath);
+
+// SECTION: Function: Printing
+int print(char* str);
 
 // SECTION: Global variables
 static struct option long_option_s[] = {
@@ -99,14 +108,14 @@ int main(int ac, char** av) {
     char apikey[128];
 
     if(ac <= 1) {
-        fprintf(stderr, "%s [OPTIONS] [TEXT] ... \n", av[0]);
+        fprintf(stderr, "%s [OPTIONS] [INPUT] ... \n", av[0]);
         return EXIT_FAILURE;
     }
 
     process_options(ac, av, sl, tl, engine, apikey, input);
     translate(engine, apikey, output, input, sl, tl);
 
-    fprintf(stdout, "%s\n", output);
+    print(output);
 
     return EXIT_SUCCESS;
 }
@@ -182,15 +191,37 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
     }
 
     // Processing program inputs
+    char str[LINGWI_IO_SIZE];
     for(int i = optind; i < ac; i++) {
-        strcat(text, av[i]);
+        strcpy(str, av[i]);
     }
 
-    if(*text == 0 || text == NULL) {
-        fprintf(stderr, "[ ERR ] Invalid text input\n");
-        exit(EXIT_FAILURE);
-    }
+    // If the input string is a file name ...
+    // Treat the input as a file name, thus the final input will be the content of this file
+    if(fexist(str)) {
+        FILE* f = fopen(str, "rb");
+        if(!f) {
+            fprintf(stderr, "Invalid file");
+            exit(EXIT_FAILURE);
+        }
 
+        fread(text, sizeof(char), LINGWI_IO_SIZE, f);
+        fclose(f);
+
+        if(text == NULL || *text == 0) {
+            fprintf(stderr, "[ ERR ] Empty file input\n");
+            exit(EXIT_FAILURE);
+        }
+
+    } else { // Otherwise the input is a string, thus we just copy the 'str' to 'text'
+        strcpy(text, str);
+        
+        if(*text == 0 || text == NULL) {
+            fprintf(stderr, "[ ERR ] Invalid text input\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    
     return 1;
 }
 
@@ -295,6 +326,38 @@ int engine_valid(char* engine) {
     }
 
     return 0;
+}
+
+int fexist(char* fpath) {
+    if(access(fpath, F_OK) == 0)
+        return 1;
+    return 0;
+}
+
+int print(char* str) {
+    int i;
+    for(i = 0; i < (int) strlen(str); i++) {
+        if(str[i] == '\\' && str[i + 1] == 'n') {
+            fputc('\n', stdout);
+            i++;
+        
+            continue;
+        } 
+        
+        else if(str[i] == '\\' && str[i] == '\\' && str[i + 2] == 'n') {
+            fputc('\n', stdout);
+            i += 2;
+        
+            continue;
+        }
+
+        fputc(str[i], stdout);
+    }
+
+    if(str[i - 2] != '\\' && str[i - 1] != 'n')
+        fputc('\n', stdout);
+
+    return 1;
 }
 
 // + ------------------------------------------------------------------------------ +

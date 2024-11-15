@@ -6,7 +6,7 @@ LIBS = -lcurl
 
 TARGET = lingwi
 
-all: build install
+all: build install clean
 
 build:
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)

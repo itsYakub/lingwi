@@ -1,0 +1,8 @@
+lingwi TODOs:
+- [X] Translate the file content;       ( !!! )
+- [ ] Add more translation engines:     ( !!! )
+    - [ ] Bing;
+    - [ ] Libre;
+    - [ ] Yandex;
+- [ ] Write CMakeLists.txt;             ( ! )
+
