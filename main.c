@@ -107,11 +107,6 @@ int main(int ac, char** av) {
     char engine[8] = "google";
     char apikey[128];
 
-    if(ac <= 1) {
-        fprintf(stderr, "%s [OPTIONS] [INPUT] ... \n", av[0]);
-        return EXIT_FAILURE;
-    }
-
     process_options(ac, av, sl, tl, engine, apikey, input);
     translate(engine, apikey, output, input, sl, tl);
 
@@ -192,34 +187,54 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
 
     // Processing program inputs
     char str[LINGWI_IO_SIZE];
+    int is_str_processed = 0;
     for(int i = optind; i < ac; i++) {
         strcpy(str, av[i]);
+        is_str_processed = 1;
+    }
+    
+    // There was no input string provided
+    // Thus we can check if input wasn't actually piped to the program
+    if(!is_str_processed) {
+        if(!isatty(fileno(stdin))) {
+            int i = 0;
+            while((text[i++] = getchar()) != -1);
+            text[i - 1] = 0;
+        }
+
+        else {
+            fprintf(stderr, "%s [OPTIONS] [INPUT] ... \n", av[0]);
+            return EXIT_FAILURE;
+        }
     }
 
-    // If the input string is a file name ...
-    // Treat the input as a file name, thus the final input will be the content of this file
-    if(fexist(str)) {
-        FILE* f = fopen(str, "rb");
-        if(!f) {
-            fprintf(stderr, "Invalid file");
-            exit(EXIT_FAILURE);
-        }
+    else {
+        // If the input string is a file name ...
+        // Treat the input as a file name, thus the final input will be the content of this file
+        if(fexist(str)) {
+            FILE* f = fopen(str, "rb");
+            if(!f) {
+                fprintf(stderr, "Invalid file");
+                exit(EXIT_FAILURE);
+            }
 
-        fread(text, sizeof(char), LINGWI_IO_SIZE, f);
-        fclose(f);
+            fread(text, sizeof(char), LINGWI_IO_SIZE, f);
+            fclose(f);
 
-        if(text == NULL || *text == 0) {
-            fprintf(stderr, "[ ERR ] Empty file input\n");
-            exit(EXIT_FAILURE);
-        }
+            if(text == NULL || *text == 0) {
+                fprintf(stderr, "[ ERR ] Empty file input\n");
+                exit(EXIT_FAILURE);
+            }
 
-    } else { // Otherwise the input is a string, thus we just copy the 'str' to 'text'
-        strcpy(text, str);
+        } else { // Otherwise the input is a string, thus we just copy the 'str' to 'text'
+            strcpy(text, str);
         
-        if(*text == 0 || text == NULL) {
-            fprintf(stderr, "[ ERR ] Invalid text input\n");
-            exit(EXIT_FAILURE);
+            if(*text == 0 || text == NULL) {
+                fprintf(stderr, "[ ERR ] Invalid text input\n");
+                exit(EXIT_FAILURE);
+            }
         }
+
     }
     
     return 1;
