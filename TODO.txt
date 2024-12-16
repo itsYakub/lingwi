@@ -4,5 +4,5 @@ lingwi TODOs:
     - [ ] Bing;
     - [ ] Libre;
     - [ ] Yandex;
-- [ ] Write CMakeLists.txt;             ( ! )
+- [X] Write CMakeLists.txt;             ( ! )
 

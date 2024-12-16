@@ -21,7 +21,7 @@
 #include <curl/curl.h>
 
 // SECTION: Macro definitions
-#define LINGWI_VERSION "1.0"
+#define LINGWI_VERSION "1.1"
 #define LINGWI_IO_SIZE 5001
 #define LINGWI_URL_SIZE (LINGWI_IO_SIZE + 128)
 #define LINGWI_ISO639_1_LANGCODE_COUNT 184
@@ -52,9 +52,9 @@ static struct option long_option_s[] = {
     { "target-language", required_argument, NULL, 't' },
     { "engine", required_argument, NULL, 'e' },
     { "api-key", required_argument, NULL, 'a' },
-    { "version", no_argument, NULL, 'V' },
-    { "verbose", no_argument, NULL, 'v' },
+    { "version", no_argument, NULL, 'v' },
     { "help", no_argument, NULL, 'h' },
+    { "list-api", no_argument, NULL, 'l' },
     { 0, 0, 0, 0 }
 };
 
@@ -93,10 +93,9 @@ static const char* ISO_639_1_LANGUAGE_CODES[LINGWI_ISO639_1_LANGCODE_COUNT] = {
 };
 
 static const char* TRANSLATION_ENGINES[LINGWI_TRANSLATION_ENGINES_COUNT] = {
+    /* Add your translation engines here ... */
     "google"
 };
-
-static int verbose_flag = 0;
 
 int main(int ac, char** av) {
     char input[LINGWI_IO_SIZE] = { 0 }; 
@@ -126,7 +125,7 @@ size_t callback(char* ptr, size_t size, size_t nmemb, char* data) {
 int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text) {
     // Processing program options
     char opt;
-    while((opt = getopt_long(ac, av, ":s:t:e:a:vVh", long_option_s, NULL)) != -1) {
+    while((opt = getopt_long(ac, av, ":s:t:e:a:vVhl", long_option_s, NULL)) != -1) {
         switch(opt) {
             case 's': {
                 if(!lang_valid(optarg)) {
@@ -159,26 +158,30 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
                 strcpy(apikey, optarg);
             } break;
 
-            case 'v': {
-                verbose_flag = 1;
-            } break;
-
             case 'h':
                 fprintf(stdout, "\033[1mlingwi\033[0m - translation command-line utility\n");
                 fprintf(stdout, "  \033[1m-s\033[0m, \033[1m--source-language\033[0m    select a source language (translation from...) (DEFAULT: en)\n");
                 fprintf(stdout, "  \033[1m-t\033[0m, \033[1m--target-language\033[0m    select a target language (translation to...) (DEFAULT: en)\n");
                 fprintf(stdout, "  \033[1m-e\033[0m, \033[1m--engine\033[0m             select a translation engine (DEFAULT: google)\n");
                 fprintf(stdout, "  \033[1m-a\033[0m, \033[1m--api-key\033[0m            select an api key (DEFAULT: none)\n");
-                fprintf(stdout, "  \033[1m-V\033[0m, \033[1m--version\033[0m            display a version (%s)\n", LINGWI_VERSION);
-                fprintf(stdout, "  \033[1m-v\033[0m, \033[1m--verbose\033[0m            enable verbosity\n");
-                fprintf(stdout, "  \033[1m-h\033[0m, \033[1m--help\033[0m               display a help message\n\n");
+                fprintf(stdout, "  \033[1m-v\033[0m, \033[1m--version\033[0m            display a version (%s)\n", LINGWI_VERSION);
+                fprintf(stdout, "  \033[1m-h\033[0m, \033[1m--help\033[0m               display a help message\n");
+                fprintf(stdout, "  \033[1m-l\033[0m, \033[1m--list-api\033[0m           list all the available API's\n\n");
                 fprintf(stdout, "\033[1mAll language codes:\033[0m\n   https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes\n"); 
                 
                 exit(EXIT_SUCCESS);
 
-            case 'V':
+            case 'v':
                 fprintf(stdout, "%s\n", LINGWI_VERSION);
                 exit(EXIT_SUCCESS);
+
+			case 'l':
+				fprintf(stdout, "\033[1mlingwi translation APIs:\033[0m\n");
+				fprintf(stdout, "> Google:\n");
+				fprintf(stdout, "	- api-key: optional\n");
+				fprintf(stdout, "	- token limit: 5000\n");
+				
+				exit(EXIT_SUCCESS);	
 
             default:
                 exit(EXIT_FAILURE);
@@ -204,7 +207,7 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
 
         else {
             fprintf(stderr, "%s [OPTIONS] [INPUT] ... \n", av[0]);
-            return EXIT_FAILURE;
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -234,21 +237,13 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
                 exit(EXIT_FAILURE);
             }
         }
-
-    }
-    
+    } 
     return 1;
 }
 
 int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl) {
-    if(verbose_flag) {
-        fprintf(stdout, "[ INFO ] Source language:  %s\n", sl);
-        fprintf(stdout, "[ INFO ] Target language:  %s\n", tl);
-        fprintf(stdout, "[ INFO ] Selected engine:  %s\n", engine);
-        fprintf(stdout, "[ INFO ] API Key:          %s\n", apikey);
-    }
-
     if(strcmp(engine, TRANSLATION_ENGINES[0]) == 0) { // Engine: google
+		(void) apikey;
         translate_engine_google(dest, src, sl, tl);
     } else {
         fprintf(stderr, "[ ERR ] Invalid engine\n");
@@ -269,8 +264,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
         exit(EXIT_FAILURE);
     }
 
-    if(verbose_flag) fprintf(stdout, "[ INFO ] cURL created successfully\n");
-
     char* text = curl_easy_escape(curl, src, 0);
     if(!text) {
         fprintf(stderr, "[ ERR ] Modified translation string is invalid\n");
@@ -278,8 +271,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
         curl_easy_cleanup(curl);
         exit(EXIT_FAILURE);
     }
-
-    if(verbose_flag) fprintf(stdout, "[ INFO ] Encoded string: %s\n", text);
 
     char url[LINGWI_URL_SIZE];
     snprintf(
@@ -291,8 +282,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
             text
     );
 
-    if(verbose_flag) fprintf(stdout, "[ INFO ] URL: %s\n", url);
-    
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
@@ -301,7 +290,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
     // Translation
     ccode = curl_easy_perform(curl);
     
-    if(verbose_flag) fprintf(stdout, "[ INFO ] cURL perform exit code: %i\n", ccode);
     if(ccode != CURLE_OK) {
         fprintf(stderr, "[ ERR ] %s\n", curl_easy_strerror(ccode));
 
@@ -311,8 +299,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
 
     curl_easy_cleanup(curl);
 
-    if(verbose_flag) fprintf(stdout, "[ INFO ] Translation result: %s\n", dest);
-
     // Parsing
     sscanf(dest, "[\"%5000[^\"]", dest);
     if(!dest) {
@@ -320,8 +306,6 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
         exit(EXIT_FAILURE);
     }
 
-    if(verbose_flag) fprintf(stdout, "[ INFO ] Parse result: %s\n", dest);
-    
     return 1;
 }
 
