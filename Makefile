@@ -13,8 +13,13 @@ all: build install clean
 build:
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)
 
-install:
-	cp $(TARGET) ~/.local/bin
+install: $(TARGET)
+ifneq ($(shell id -u), 0)
+		cp $(TARGET) ~/.local/bin
+else
+		cp $(TARGET) /usr/bin
+endif
+
 
 rebuild: clean build
 
@@ -24,4 +29,8 @@ clean:
 	rm $(TARGET)
 
 remove:
-	rm ~/.local/bin/$(TARGET)
+ifneq ($(shell id -u), 0)
+		rm -f ~/.local/bin/$(TARGET)
+else
+		rm -f /usr/bin/$(TARGET)
+endif

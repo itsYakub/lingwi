@@ -1,3 +1,7 @@
 #!/bin/bash
 
-cp ./lingwi ~/.local/bin
+if [ $(id -u) -ne 0 ]; then
+	cp ./lingwi $HOME/.local/bin
+else
+	cp ./lingwi /usr/bin
+fi

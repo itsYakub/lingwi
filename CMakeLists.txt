@@ -58,7 +58,7 @@ FetchContent_MakeAvailable(libcurl)
 
 project(
 	lingwi
-	VERSION 1.1
+	VERSION 1.2
 	DESCRIPTION "Translation command-line utility for linux"
 	HOMEPAGE_URL "https://github.com/itsYakub/lingw" 
 	LANGUAGES C
