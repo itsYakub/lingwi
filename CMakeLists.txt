@@ -36,29 +36,12 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # ----------------------
-# Section: Fetch Content
-# ----------------------
-
-include(FetchContent)
-
-# --------------------
-# Sub-Section: libcurl
-# --------------------
-
-FetchContent_Declare(
-    libcurl
-    GIT_REPOSITORY https://github.com/curl/curl
-)
-
-FetchContent_MakeAvailable(libcurl)
-
-# ----------------------
 # Section: Project setup
 # ----------------------
 
 project(
 	lingwi
-	VERSION 1.2
+	VERSION 1.3
 	DESCRIPTION "Translation command-line utility for linux"
 	HOMEPAGE_URL "https://github.com/itsYakub/lingw" 
 	LANGUAGES C
@@ -70,7 +53,11 @@ project(
 
 set(
 	SOURCES
-	${CMAKE_SOURCE_DIR}/main.c
+	${CMAKE_SOURCE_DIR}/src/lingwi-main.c
+	${CMAKE_SOURCE_DIR}/src/lingwi-core.c
+	${CMAKE_SOURCE_DIR}/src/lingwi-opt.c
+	${CMAKE_SOURCE_DIR}/src/lingwi-trans.c
+	${CMAKE_SOURCE_DIR}/src/lingwi-utils.c
 	# ...
 )
 
@@ -80,6 +67,7 @@ set(
 
 set(
 	INCLUDE_DIRECTORIES
+	${CMAKE_SOURCE_DIR}/inc/
 	# ...
 )
 
@@ -89,7 +77,7 @@ set(
 
 set(
 	LINK_LIBRARIES
-    libcurl
+    curl
 	# ...
 )
 

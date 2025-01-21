@@ -32,34 +32,34 @@
 
 // SECTION: Function declarations
 // SECTION: Function: cURL
-size_t callback(char* ptr, size_t size, size_t nmemb, char* data);
+size_t	lingwi_callback(char* ptr, size_t size, size_t nmemb, char* data);
 
 // SECTION: Function: Program arguments
-char *get_system_language(char lang[8]);
-int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text);
+char	*lingwi_get_systemlang(char lang[8]);
+int		lingwi_process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text);
 
 // SECTION: Function: Translation
-int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl);
-int translate_engine_google(char* dest, char* src, char* sl, char* tl);
+int		lingwi_translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl);
+int		lingwi_translate_engine_google(char* dest, char* src, char* sl, char* tl);
 
 // SECTION: Function: Validation
-int lang_valid(char* lang);
-int engine_valid(char* engine);
-int fexist(char* fpath);
+int		lingwi_langvalid(char* lang);
+int		lingwi_envalid(char* engine);
+int		lingwi_fexist(char* fpath);
 
 // SECTION: Function: Printing
-int print(char* str);
+int		lingwi_print(char* str);
 
 // SECTION: Global variables
 static struct option long_option_s[] = {
-    { "source-language", required_argument, NULL, 's' },
-    { "target-language", required_argument, NULL, 't' },
-    { "engine", required_argument, NULL, 'e' },
-    { "api-key", required_argument, NULL, 'a' },
-    { "version", no_argument, NULL, 'v' },
-    { "help", no_argument, NULL, 'h' },
-    { "list-api", no_argument, NULL, 'l' },
-    { 0, 0, 0, 0 }
+    { "source-language",	required_argument,	NULL,	's' },
+    { "target-language",	required_argument,	NULL,	't' },
+    { "engine",				required_argument,	NULL,	'e' },
+    { "api-key",			required_argument,	NULL,	'a' },
+    { "version",			no_argument,		NULL,	'v' },
+    { "help",				no_argument,		NULL,	'h' },
+    { "list-api",			no_argument,		NULL,	'l' },
+    { 0,					0,					0,		0	}
 };
 
 // Source:
@@ -110,36 +110,35 @@ int main(int ac, char** av) {
     char engine[LINGWI_APINAME_SIZE] = "google";
     char apikey[128];
 
-	get_system_language(tl);
-    process_options(ac, av, sl, tl, engine, apikey, input);
-    translate(engine, apikey, output, input, sl, tl);
+	lingwi_get_systemlang(tl);
+    lingwi_process_options(ac, av, sl, tl, engine, apikey, input);
+    lingwi_translate(engine, apikey, output, input, sl, tl);
 
-    print(output);
+    lingwi_print(output);
 
     return (EXIT_SUCCESS);
 }
 
-size_t callback(char* ptr, size_t size, size_t nmemb, char* data) {
+size_t lingwi_callback(char* ptr, size_t size, size_t nmemb, char* data) {
     size_t bytes = size * nmemb;
 
     strcpy(data, ptr);
-
     return (bytes);
 }
 
-char *get_system_language(char lang[8]) {
+char *lingwi_get_systemlang(char lang[8]) {
 	char *envlang = getenv("LANG");
 
 	return (strncpy(lang, envlang, strchr(envlang, '_') - envlang));
 }
 
-int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text) {
+int lingwi_process_options(int ac, char** av, char* sl, char* tl, char* engine, char* apikey, char* text) {
     // Processing program options
     char opt;
     while ((opt = getopt_long(ac, av, ":s:t:e:a:vVhl", long_option_s, NULL)) != -1) {
         switch (opt) {
             case 's': {
-                if(!lang_valid(optarg)) {
+                if(!lingwi_langvalid(optarg)) {
                     fprintf(stderr, "[ ERR ] Invalid language code: %s\n", optarg);
                     exit(EXIT_FAILURE);
                 }
@@ -148,7 +147,7 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
             } break;
 
             case 't': {
-                if(!lang_valid(optarg)) {
+                if(!lingwi_langvalid(optarg)) {
                     fprintf(stderr, "[ ERR ] Invalid language code: %s\n", optarg);
                     exit(EXIT_FAILURE);
                 }
@@ -157,7 +156,7 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
             } break;
 
             case 'e': {
-                if(!engine_valid(optarg)) {
+                if(!lingwi_envalid(optarg)) {
                     fprintf(stderr, "[ ERR ] Invalid engine: %s\n", optarg);
                     exit(EXIT_FAILURE);
                 }
@@ -225,7 +224,7 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
     else {
         // If the input string is a file name ...
         // Treat the input as a file name, thus the final input will be the content of this file
-        if (fexist(str)) {
+        if (lingwi_fexist(str)) {
             FILE* f = fopen(str, "rb");
             if (!f) {
                 fprintf(stderr, "Invalid file");
@@ -252,10 +251,10 @@ int process_options(int ac, char** av, char* sl, char* tl, char* engine, char* a
     return (1);
 }
 
-int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl) {
+int lingwi_translate(char* engine, char* apikey, char* dest, char* src, char* sl, char* tl) {
     if (strcmp(engine, TRANSLATION_ENGINES[0]) == 0) { // Engine: google
 		(void) apikey;
-        translate_engine_google(dest, src, sl, tl);
+        lingwi_translate_engine_google(dest, src, sl, tl);
     } else {
         fprintf(stderr, "[ ERR ] Invalid engine\n");
     }
@@ -263,7 +262,7 @@ int translate(char* engine, char* apikey, char* dest, char* src, char* sl, char*
     return (1);
 }
 
-int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
+int lingwi_translate_engine_google(char* dest, char* src, char* sl, char* tl) {
     // Setup
     CURL* curl;
 	CURLcode ccode;
@@ -295,7 +294,7 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
     );
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, lingwi_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, cinput);
     curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
@@ -322,7 +321,7 @@ int translate_engine_google(char* dest, char* src, char* sl, char* tl) {
     return (1);
 }
 
-int lang_valid(char* lang) {
+int lingwi_langvalid(char* lang) {
     for (int i = 0; i < LINGWI_ISO639_1_LANGCODE_COUNT; i++) {
         if (strcmp(lang, ISO_639_1_LANGUAGE_CODES[i]) == 0)
             return (1);
@@ -331,7 +330,7 @@ int lang_valid(char* lang) {
     return (0);
 }
 
-int engine_valid(char* engine) {
+int lingwi_envalid(char* engine) {
     for (int i = 0; i < LINGWI_TRANSLATION_ENGINES_COUNT; i++) {
         if (strcmp(engine, TRANSLATION_ENGINES[i]) == 0)
             return (1);
@@ -340,13 +339,13 @@ int engine_valid(char* engine) {
     return (0);
 }
 
-int fexist(char* fpath) {
+int lingwi_fexist(char* fpath) {
     if (access(fpath, F_OK) == 0)
         return (1);
     return (0);
 }
 
-int print(char* str) {
+int lingwi_print(char* str) {
     int i;
     for (i = 0; i < (int) strlen(str); i++) {
         if (str[i] == '\\' && str[i + 1] == 'n') {

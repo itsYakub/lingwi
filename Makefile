@@ -1,8 +1,8 @@
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -Wpedantic -g
-
-SRC = main.c
-LIBS = -lcurl
+CFLAGS = -Wall -Wextra -Werror -Wpedantic
+SRC = ./src/lingwi-main.c ./src/lingwi-core.c ./src/lingwi-opt.c ./src/lingwi-trans.c
+LFLAGS = -lcurl
+IFLAGS = -I./inc/
 
 TARGET = lingwi
 
@@ -11,7 +11,7 @@ all: build install clean
 .PHONY: build install rebuild reinstall clean remove
 
 build:
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LFLAGS) $(IFLAGS)
 
 install: $(TARGET)
 ifneq ($(shell id -u), 0)
@@ -20,15 +20,14 @@ else
 		cp $(TARGET) /usr/bin
 endif
 
-
 rebuild: clean build
 
 reinstall: clean build install clean
 
 clean:
-	rm $(TARGET)
+	rm -f $(TARGET)
 
-remove:
+remove: clean
 ifneq ($(shell id -u), 0)
 		rm -f ~/.local/bin/$(TARGET)
 else

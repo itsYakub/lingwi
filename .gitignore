@@ -54,3 +54,7 @@ dkms.conf
 # Vim files
 *.swp
 *.swo
+
+# Binary direcotries
+bin/
+build/
