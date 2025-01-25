@@ -22,11 +22,12 @@ i32	main(i32 ac, char **av) {
 		return (1);		
 	}
 	lingwi_default_settings();
-	if (!lingwi_opt(ac, av, input)) {
+	if (!lingwi_opt(ac, av, &input)) {
 		return (1);
 	}
-	lingwi_translate(input, output);
-	fprintf(stdout, "%s\n", output);
+	if (lingwi_translate(&input, &output)) {
+		fprintf(stdout, "%s\n", output);
+	}
 	LINGWI_FREE(input);
 	LINGWI_FREE(output);
 	return (0);

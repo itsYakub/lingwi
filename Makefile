@@ -1,6 +1,6 @@
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -Wpedantic
-SRC = ./src/lingwi-main.c ./src/lingwi-core.c ./src/lingwi-opt.c ./src/lingwi-trans.c
+SRC = ./src/lingwi-main.c ./src/lingwi-core.c ./src/lingwi-opt.c ./src/lingwi-trans.c ./src/lingwi-utils.c
 LFLAGS = -lcurl
 IFLAGS = -I./inc/
 

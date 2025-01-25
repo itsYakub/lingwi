@@ -58,3 +58,6 @@ dkms.conf
 # Binary direcotries
 bin/
 build/
+
+# Project's binary
+lingwi

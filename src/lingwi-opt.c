@@ -30,7 +30,7 @@ static struct option LINGWI_LONGOPT[] = {
 
 static char	*__lingwi_input(i32 ac, char **av);
 
-LINGWI_API i32	lingwi_opt(i32 ac, char **av, char *input) {
+LINGWI_API i32	lingwi_opt(i32 ac, char **av, char **input) {
 	char	opt;
 
 	while ((opt = getopt_long(ac, av, ":s:t:e:a:vhl", LINGWI_LONGOPT, NULL)) != -1) {
@@ -85,8 +85,8 @@ LINGWI_API i32	lingwi_opt(i32 ac, char **av, char *input) {
 			}
 		}
 	}
-	input = __lingwi_input(ac, av);
-	if (!input) {
+	*input = __lingwi_input(ac, av);
+	if (!*input) {
 		fprintf(stderr, "ERR.: No input provided\n");
 		return (0);
 	}
@@ -98,11 +98,11 @@ static char	*__lingwi_input(i32 ac, char **av) {
 	i32		str_proc;
 
 	str_proc = 0;
-	for (size_t i = 0; i < optind; i++) {
+	for (size_t i = optind; !str_proc && (int) i < ac; i++) {
 		lingwi_strlcpy(str, av[i], 1024);
 		if (*str) {
 			str_proc = 1;
 		}
 	}
-	return (lingwi_strdup(str));	
+	return (lingwi_strdup(str));
 }

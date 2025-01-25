@@ -68,12 +68,20 @@ LINGWI_API i32	lingwi_set_slang(const char *code) {
 	return (0);
 }
 
+LINGWI_API char	*lingwi_get_slang(void) {
+	return (LINGWI_SOURCE_LANGUAGE);
+}
+
 LINGWI_API i32	lingwi_set_tlang(const char *code) {
 	if (__lingwi_validate_langcode(code)) {
 		lingwi_strlcpy(LINGWI_TARGET_LANGUAGE, code, 8);
 		return (1);
 	}
 	return (0);
+}
+
+LINGWI_API char	*lingwi_get_tlang(void) {
+	return (LINGWI_TARGET_LANGUAGE);
 }
 
 LINGWI_API i32	lingwi_set_apikey(const char *key) {
@@ -88,7 +96,7 @@ LINGWI_API i32	lingwi_get_syslang(char *dst) {
 	if (!env) {
 		return (0);
 	}
-	strlcpy(dst, env, 2);
+	strlcpy(dst, env, 3);
 	if (!__lingwi_validate_langcode(dst)) {
 		return (0);
 	}
@@ -97,11 +105,11 @@ LINGWI_API i32	lingwi_get_syslang(char *dst) {
 
 static i32	__lingwi_validate_langcode(const char *code) {
 	for (size_t i = 0; LINGW_ISO_639_1_LANGCODES[i]; i++) {
-		if (strcmp(LINGW_ISO_639_1_LANGCODES[i], code)) {
-			return (0);
+		if (!strcmp(LINGW_ISO_639_1_LANGCODES[i], code)) {
+			return (1);
 		}
 	}
-	return (1);
+	return (0);
 }
 
 LINGWI_API i32	lingwi_default_settings(void) {

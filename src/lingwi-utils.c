@@ -1,3 +1,14 @@
+// + -------------------------------------- +
+// |  _   _                              _  |
+// | | | (_)  _ __     __ _  __      __ (_) |
+// | | | | | | '_ \   / _` | \ \ /\ / / | | |
+// | | | | | | | | | | (_| |  \ V  V /  | | |
+// | |_| |_| |_| |_|  \__, |   \_/\_/   |_| |
+// |                  |___/                 |
+// + -------------------------------------- +
+// | Translation command-line utility.      |
+// + -------------------------------------- +
+
 #include "lingwi-utils.h"
 
 #include <string.h>
@@ -47,4 +58,17 @@ LINGWI_API char		*lingwi_strdup(const char *str) {
 	}
 	res[iter] = '\0';
 	return (res);
+}
+
+LINGWI_API char		*lingwi_strjoin(char *s1, char *s2) {
+	char	*str;
+
+	str = (char *) LINGWI_CALLOC(strlen(s1) + strlen(s2) + 1, sizeof(char));
+	if (!str) {
+		return (NULL);
+	}
+	strcpy(str, s1);
+	strcat(str, s2);
+	LINGWI_FREE(s1);
+	return (str);
 }

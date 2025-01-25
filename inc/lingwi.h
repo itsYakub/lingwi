@@ -1,3 +1,14 @@
+// + -------------------------------------- +
+// |  _   _                              _  |
+// | | | (_)  _ __     __ _  __      __ (_) |
+// | | | | | | '_ \   / _` | \ \ /\ / / | | |
+// | | | | | | | | | | (_| |  \ V  V /  | | |
+// | |_| |_| |_| |_|  \__, |   \_/\_/   |_| |
+// |                  |___/                 |
+// + -------------------------------------- +
+// | Translation command-line utility.      |
+// + -------------------------------------- +
+
 #ifndef LINGWI_H
 # define LINGWI_H
 
@@ -68,11 +79,13 @@ typedef int64_t		i64;
 
 LINGWI_API i32	lingwi_set_engine(const char *engine);
 LINGWI_API i32	lingwi_set_slang(const char *code);
+LINGWI_API char	*lingwi_get_slang(void);
 LINGWI_API i32	lingwi_set_tlang(const char *code);
+LINGWI_API char	*lingwi_get_tlang(void);
 LINGWI_API i32	lingwi_set_apikey(const char *key);
-LINGWI_API i32	lingwi_translate(const char *input, char *output);
+LINGWI_API i32	lingwi_translate(char **input, char **output);
 LINGWI_API i32	lingwi_get_syslang(char *dst);
-LINGWI_API i32	lingwi_opt(i32 ac, char **av, char *input);
+LINGWI_API i32	lingwi_opt(i32 ac, char **av, char **input);
 LINGWI_API i32	lingwi_default_settings(void);
 
 #endif /* LINGWI_H */
