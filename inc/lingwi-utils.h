@@ -25,6 +25,7 @@
 
 LINGWI_API size_t	lingwi_strlcpy(char *dst, const char *src, size_t s);
 LINGWI_API char		*lingwi_strdup(const char *str);
+LINGWI_API char		*lingwi_strcdup(const char *str, char c);
 LINGWI_API char		*lingwi_strjoin(char *s1, char *s2);
 
 #endif /* LINGWI_UTILS_H */

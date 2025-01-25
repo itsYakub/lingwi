@@ -17,10 +17,8 @@ i32	main(i32 ac, char **av) {
 	char	*input;
 	char	*output;
 
-	if (ac < 2) {
-		fprintf(stderr, "$ lingwi [OPTIONS] [INPUT] ...\n");
-		return (1);		
-	}
+	input = NULL;
+	output = NULL;
 	lingwi_default_settings();
 	if (!lingwi_opt(ac, av, &input)) {
 		return (1);

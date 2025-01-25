@@ -60,6 +60,21 @@ LINGWI_API char		*lingwi_strdup(const char *str) {
 	return (res);
 }
 
+LINGWI_API char		*lingwi_strcdup(const char *str, char c) {
+	char	*res;
+	size_t	iter;
+
+	res = LINGWI_MALLOC((strchr(str, c) - str + 1) * sizeof(char));
+	if (!res) {
+		return (NULL);
+	}
+	for (iter = 0; str[iter] && str[iter] != c; iter++) {
+		res[iter] = str[iter];
+	}
+	res[iter] = '\0';
+	return (res);
+}
+
 LINGWI_API char		*lingwi_strjoin(char *s1, char *s2) {
 	char	*str;
 

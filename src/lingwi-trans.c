@@ -42,7 +42,7 @@ LINGWI_API i32	lingwi_translate(char **input, char **output) {
 		return (0);
 	}
 	copt_url = __lingwi_create_url(input_escaped);
-	copt_out = (char *) LINGWI_CALLOC(5001, sizeof(char));
+	copt_out = (char *) LINGWI_CALLOC(LINGWI_TRANS_STR_LENGTH, sizeof(char));
 	curl_easy_setopt(curl, CURLOPT_URL, copt_url);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, __lingwi_trans_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, copt_out);

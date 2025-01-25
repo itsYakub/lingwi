@@ -5,4 +5,4 @@ lingwi TODOs:
     - [ ] Libre;
     - [ ] Yandex;
 - [X] Write CMakeLists.txt;             ( ! )
-- [ ] CODE REFACTORING					( !!! )
+- [X] CODE REFACTORING					( !!! )
